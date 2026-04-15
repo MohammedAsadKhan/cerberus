@@ -1,17 +1,17 @@
 # 🐕🐕🐕 Cerberus - Password Policy Auditor & Strength Analyzer
 
-> Cerberus — the three-headed guardian of the underworld, destroyer of souls, devourer of the weak...
+> Cerberus - the three-headed guardian of the underworld, destroyer of souls, devourer of the weak...
 > ...is a CLI tool that checks if your password policy meets NIST guidelines.
 >
 > Yeah. That's it. Anticlimax intended.
 
 Much like its namesake, Cerberus has three heads:
 
-* 🐕 **Audit** — tears apart your organization's password policy against NIST SP 800-63B
-* 🐕 **Check** — judges your individual passwords with zero mercy
-* 🐕 **Bulk** — devours entire CSVs of passwords and spits out a professional audit report
+* 🐕 **Audit** - tears apart your organization's password policy against NIST SP 800-63B
+* 🐕 **Check** - judges your individual passwords with zero mercy
+* 🐕 **Bulk** - devours entire CSVs of passwords and spits out a professional audit report
 
-While the name might suggest something terrifying, Cerberus is actually just tired of seeing companies get breached because their IT department thought `Password123!` with a 90-day expiry was a security policy. So here we are.
+While the name might suggest something terrifying, Cerberus is actually just tired of seeing companies get breached because their IT department thought `Password123!` with a 90-day expiry was secure.
 
 ---
 
@@ -21,15 +21,15 @@ Everyone builds password strength checkers and password savers. Nobody thinks ab
 
 **Weak password *policies* are what actually get companies breached — not individual weak passwords.**
 
-This tool bridges the gap between technical security and GRC (Governance, Risk and Compliance), benchmarking policies against NIST SP 800-63B guidelines and explaining findings in a way that non-technical stakeholders can understand.
+This tool bridges the gap between technical security and GRC (Governance, Risk and Compliance), benchmarking policies against NIST SP 800-63B guidelines and explaining findings in a way that non-technical stakeholders understand.
 
 ---
 
 ## Why Go
 
-Real security tools ship as binaries, not scripts. Go compiles to a single binary with zero dependencies — drop it on any machine, even air-gapped systems, and run it instantly.
+Real security tools ship as binaries, not scripts. Go compiles to a single binary with zero dependencies - drop it on any machine, even air-gapped systems, and run it instantly.
 
-Modern security tools like [Gobuster](https://github.com/OJ/gobuster), [Nuclei](https://github.com/projectdiscovery/nuclei), [Subfinder](https://github.com/projectdiscovery/subfinder), and [Trivy](https://github.com/aquasecurity/trivy) are all written in Go. I wanted to build in the same ecosystem professionals actually use, not write another Python script.
+Modern security tools like [Gobuster](https://github.com/OJ/gobuster), [Nuclei](https://github.com/projectdiscovery/nuclei), [Subfinder](https://github.com/projectdiscovery/subfinder), and [Trivy](https://github.com/aquasecurity/trivy) all use Go for exactly this reason.
 
 ---
 
@@ -61,7 +61,7 @@ go build -o cerberus .
 
 ## Usage
 
-### 🐕 Head 1 — Audit a Password Policy
+### 🐕 Head 1 - Audit a Password Policy
 
 ```bash
 cerberus audit \
@@ -73,19 +73,19 @@ cerberus audit \
   --mfa
 ```
 
-### 🐕 Head 2 — Check a Single Password
+### 🐕 Head 2 - Check a Single Password
 
 ```bash
 cerberus check "MyP@ssw0rd!" --hibp
 ```
 
-### 🐕 Head 3 — Bulk Audit via CSV
+### 🐕 Head 3 - Bulk Audit via CSV
 
 ```bash
 cerberus bulk passwords.csv --output report.pdf --hibp
 ```
 
-CSV format — one password per line:
+CSV format - one password per line:
 
 ```
 hunter2
@@ -95,7 +95,7 @@ P@ssw0rd!
 
 ---
 
-## NIST SP 800-63B — What Cerberus Checks
+## NIST SP 800-63B - What Cerberus Checks
 
 | Rule | NIST Guidance | Weight |
 |---|---|---|
@@ -110,11 +110,11 @@ P@ssw0rd!
 
 ## Stack
 
-- **Go** — single binary, zero dependencies
-- **[Cobra](https://github.com/spf13/cobra)** — CLI framework
-- **[gofpdf](https://github.com/jung-kurt/gofpdf)** — PDF report generation
-- **[color](https://github.com/fatih/color)** — terminal color output
-- **[HaveIBeenPwned API](https://haveibeenpwned.com/API/v3)** — k-Anonymity breach lookup (your password is never transmitted in full)
+- **Go** - single binary, zero dependencies
+- **[Cobra](https://github.com/spf13/cobra)** - CLI framework
+- **[gofpdf](https://github.com/jung-kurt/gofpdf)** - PDF report generation
+- **[color](https://github.com/fatih/color)** - terminal color output
+- **[HaveIBeenPwned API](https://haveibeenpwned.com/API/v3)** - k-Anonymity breach lookup (your password is never transmitted in full)
 
 ---
 
