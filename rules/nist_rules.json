@@ -1,0 +1,49 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-04-17",
+  "source": "NIST Special Publication 800-63B (Digital Identity Guidelines)",
+  "rules": [
+    {
+      "id": "MIN_LENGTH",
+      "description": "Minimum password length of at least 15 characters (NIST recommends 15+)",
+      "recommendation": "Set minimum length to 15+ characters. Length is the single most impactful password security control.",
+      "breach_stat": "81% of hacking-related breaches involve weak or stolen passwords (Verizon DBIR).",
+      "weight": 20
+    },
+    {
+      "id": "MAX_LENGTH",
+      "description": "Maximum password length of at least 64 characters (NIST mandates no low maximum)",
+      "recommendation": "Set max length to at least 64 characters. Truncating passwords forces users toward weaker options.",
+      "breach_stat": "",
+      "weight": 10
+    },
+    {
+      "id": "NO_EXPIRY",
+      "description": "No arbitrary password expiry (NIST SP 800-63B §5.1.1.2 discourages forced rotation)",
+      "recommendation": "Remove periodic expiry. Forced rotation leads to predictable patterns like Password1 → Password2.",
+      "breach_stat": "Forced password changes increase reuse by up to 41% (UNC Chapel Hill study).",
+      "weight": 15
+    },
+    {
+      "id": "NO_COMPLEXITY",
+      "description": "No mandatory complexity rules (NIST discourages arbitrary character-class requirements)",
+      "recommendation": "Drop character-class mandates. They cause users to create predictable substitutions like P@ssw0rd!",
+      "breach_stat": "Complexity rules are among the top causes of weak-but-technically-compliant passwords.",
+      "weight": 10
+    },
+    {
+      "id": "HIBP_CHECK",
+      "description": "Passwords checked against known breach databases (NIST §5.1.1.2)",
+      "recommendation": "Integrate HaveIBeenPwned or a similar service to block known-compromised passwords at authentication.",
+      "breach_stat": "Over 550 million compromised passwords are publicly searchable. Your users reuse them.",
+      "weight": 20
+    },
+    {
+      "id": "MFA",
+      "description": "Multi-factor authentication enforced alongside passwords (NIST AAL2)",
+      "recommendation": "Mandate MFA. A breached password is game over without a second factor.",
+      "breach_stat": "MFA blocks 99.9% of automated account compromise attacks (Microsoft, 2019).",
+      "weight": 25
+    }
+  ]
+}

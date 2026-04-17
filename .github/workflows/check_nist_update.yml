@@ -1,0 +1,202 @@
+name: NIST Rules Update Check
+
+on:
+  schedule:
+    # Runs every Monday at 08:00 UTC
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+    # Allow manual trigger from the Actions tab
+
+jobs:
+  check-nist-update:
+    name: Check NIST SP 800-63B for Changes
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Checkout the repository ──────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python (used for the diff + hash logic) ───────────────────
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4 lxml
+
+      # ── 3. Fetch the current NIST SP 800-63B page and extract key sections ──
+      - name: Fetch and parse NIST SP 800-63B
+        id: fetch_nist
+        run: |
+          python3 - <<'EOF'
+          import requests
+          import hashlib
+          import json
+          import os
+          from bs4 import BeautifulSoup
+
+          url = "https://pages.nist.gov/800-63-3/sp800-63b.html"
+
+          print(f"Fetching: {url}")
+          resp = requests.get(url, timeout=15)
+          resp.raise_for_status()
+
+          soup = BeautifulSoup(resp.text, "lxml")
+
+          # Target the sections most relevant to password policy
+          target_sections = [
+              "5.1.1",   # Memorized Secret Authenticators
+              "5.1.1.1", # Memorized Secret Authenticator Requirements
+              "5.1.1.2", # Memorized Secret Verifier Requirements
+          ]
+
+          extracted = {}
+          for section_id in target_sections:
+              tag = soup.find(id=section_id) or soup.find("section", {"data-section": section_id})
+              if tag:
+                  extracted[section_id] = tag.get_text(separator=" ", strip=True)
+              else:
+                  # Fallback: search by heading text
+                  for heading in soup.find_all(["h2", "h3", "h4"]):
+                      if section_id in heading.get_text():
+                          # Grab heading + next sibling content
+                          content = heading.get_text(separator=" ", strip=True)
+                          next_tag = heading.find_next_sibling()
+                          if next_tag:
+                              content += " " + next_tag.get_text(separator=" ", strip=True)
+                          extracted[section_id] = content
+                          break
+
+          # Hash the combined relevant content
+          combined = json.dumps(extracted, sort_keys=True)
+          current_hash = hashlib.sha256(combined.encode()).hexdigest()
+
+          print(f"Sections extracted: {list(extracted.keys())}")
+          print(f"Content hash: {current_hash}")
+
+          # Write outputs for next steps
+          with open("nist_current_hash.txt", "w") as f:
+              f.write(current_hash)
+
+          with open("nist_content.json", "w") as f:
+              json.dump(extracted, f, indent=2)
+
+          EOF
+
+      # ── 4. Compare against the stored hash ──────────────────────────────────
+      - name: Compare hash against stored baseline
+        id: compare
+        run: |
+          CURRENT_HASH=$(cat nist_current_hash.txt)
+          STORED_HASH=""
+
+          if [ -f ".github/nist_baseline_hash.txt" ]; then
+            STORED_HASH=$(cat .github/nist_baseline_hash.txt)
+          fi
+
+          echo "Stored hash:  $STORED_HASH"
+          echo "Current hash: $CURRENT_HASH"
+
+          if [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "current_hash=$CURRENT_HASH" >> $GITHUB_OUTPUT
+            echo "::notice::NIST SP 800-63B change detected. A review PR will be opened."
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "::notice::No changes detected in NIST SP 800-63B. Rules are current."
+          fi
+
+      # ── 5. If changed: generate diff report and open a PR ───────────────────
+      - name: Generate diff report
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          python3 - <<'EOF'
+          import json
+          from datetime import datetime
+
+          with open("nist_content.json") as f:
+              content = json.load(f)
+
+          today = datetime.utcnow().strftime("%Y-%m-%d")
+
+          report = f"""# NIST SP 800-63B Change Detected
+
+          **Date detected:** {today}
+          **Action required:** Review the changes below and update `rules/nist_rules.json` if the Cerberus ruleset needs to change.
+
+          ---
+
+          ## What Changed
+
+          A difference was detected in the NIST SP 800-63B page content relevant to password policy.
+          The sections below were extracted from the live NIST page at the time of detection.
+
+          > This is an automated diff. The hash of the relevant sections changed since the last check.
+          > Manual review is required before any rules are updated.
+
+          ---
+
+          ## Extracted Section Content
+
+          """
+
+          for section_id, text in content.items():
+              report += f"### Section {section_id}\n\n"
+              report += f"```\n{text[:2000]}{'...' if len(text) > 2000 else ''}\n```\n\n"
+
+          report += """---
+
+          ## Review Checklist
+
+          - [ ] Read the extracted sections above
+          - [ ] Compare against the current `rules/nist_rules.json`
+          - [ ] Update any rules that no longer reflect current NIST guidance
+          - [ ] Increment the `version` field in `nist_rules.json`
+          - [ ] Update the `last_updated` field
+          - [ ] Merge this PR to push updates to all users
+
+          ---
+
+          *This PR was opened automatically by the Cerberus NIST Rules Update workflow.*
+          *The binary's bundled rules are unaffected until a new release is cut.*
+          """
+
+          with open("NIST_CHANGE_REPORT.md", "w") as f:
+              f.write(report)
+
+          print("Diff report written to NIST_CHANGE_REPORT.md")
+          EOF
+
+      - name: Update baseline hash
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          mkdir -p .github
+          cp nist_current_hash.txt .github/nist_baseline_hash.txt
+
+      - name: Create Pull Request
+        if: steps.compare.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: nist-rules-update/${{ steps.compare.outputs.current_hash }}
+          base: main
+          title: "[NIST] SP 800-63B change detected — rules review required"
+          body-path: NIST_CHANGE_REPORT.md
+          commit-message: "chore: update NIST baseline hash after detected change"
+          labels: |
+            compliance
+            rules-update
+            needs-review
+          add-paths: |
+            .github/nist_baseline_hash.txt
+
+      # ── 6. Always report final status ───────────────────────────────────────
+      - name: Report status
+        run: |
+          if [ "${{ steps.compare.outputs.changed }}" == "true" ]; then
+            echo "✅ Change detected. Pull request opened for review."
+          else
+            echo "✅ No changes detected. Cerberus rules are current with NIST SP 800-63B."
+          fi
