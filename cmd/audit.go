@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/YOUR_USERNAME/cerberus/internal/policy"
+	"github.com/MohammedAsadKhan/cerberus/internal/policy"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/YOUR_USERNAME/cerberus/internal/report"
-	"github.com/YOUR_USERNAME/cerberus/internal/strength"
+	"github.com/MohammedAsadKhan/cerberus/internal/report"
+	"github.com/MohammedAsadKhan/cerberus/internal/strength"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
