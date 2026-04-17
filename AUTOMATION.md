@@ -1,8 +1,8 @@
-# Cerberus — Automated NIST Rules Update System
+# Cerberus - Automated NIST Rules Update System
 
 ## Overview
 
-Cerberus includes a GitHub Actions workflow that automatically monitors the official NIST SP 800-63B page for changes every week. When a change is detected in the sections relevant to password policy, the workflow opens a Pull Request with a full diff report and review checklist — so a human can assess the impact before any rules are updated.
+Cerberus includes a GitHub Actions workflow that automatically monitors the official NIST SP 800-63B page for changes every week. When a change is detected in the sections relevant to password policy, the workflow opens a Pull Request with a full diff report and review checklist so a human can assess the impact before any rules are updated.
 
 This design is intentional. Compliance logic should never update silently. Every change to the ruleset goes through a review gate.
 
@@ -56,7 +56,7 @@ The workflow targets the three sections of NIST SP 800-63B most directly relevan
 | 5.1.1.1 | Memorized Secret Authenticator Requirements |
 | 5.1.1.2 | Memorized Secret Verifier Requirements |
 
-These sections govern minimum length, expiry policy, complexity rules, breach database checks, and related controls — everything Cerberus audits against.
+These sections govern minimum length, expiry policy, complexity rules, breach database checks, and related controls. Everything Cerberus audits against.
 
 ---
 
