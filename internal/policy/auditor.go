@@ -33,7 +33,7 @@ func Audit(p Policy) AuditResult {
 	totalWeight := 0
 	earned := 0
 
-	for _, rule := range ActiveRules {
+	for _, rule := range NISTRules {
 		totalWeight += rule.Weight
 		var pass bool
 		var label string

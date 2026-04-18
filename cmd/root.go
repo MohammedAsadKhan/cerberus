@@ -26,7 +26,7 @@ var rootCmd = &cobra.Command{
 		color.Green("    cerberus audit  --min-length 12 --expiry-days 90 --complexity")
 		color.Green("    cerberus check  'MyP@ssw0rd!' --hibp")
 		color.Green("    cerberus bulk   passwords.csv --output report.pdf\n")
-		fmt.Println("  Run cerberus --help for full usage.\n")
+		fmt.Println("  Run cerberus --help for full usage.")
 	},
 }
 
