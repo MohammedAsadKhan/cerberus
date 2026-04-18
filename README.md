@@ -1,4 +1,4 @@
-# 🐕🐕🐕 Cerberus — Password Policy Auditor & Strength Analyzer
+# 🐕🐕🐕 Cerberus: Password Policy Auditor & Strength Analyzer
 
 > Cerberus — the three-headed guardian of the underworld, destroyer of souls, devourer of the weak...
 > ...is a CLI tool that checks if your password policy meets NIST guidelines.
