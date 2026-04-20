@@ -2,7 +2,6 @@ name: NIST Rules Update Check
 
 on:
   schedule:
-    # Runs every Monday at 08:00 UTC
     - cron: "0 8 * * 1"
   workflow_dispatch:
 
@@ -30,135 +29,30 @@ jobs:
         run: pip install requests beautifulsoup4 lxml
 
       - name: Fetch and parse NIST SP 800-63B
-        id: fetch_nist
-        run: |
-          python3 - <<'PYEOF'
-          import requests
-          import hashlib
-          import json
-          import os
-          from bs4 import BeautifulSoup
-
-          url = "https://pages.nist.gov/800-63-3/sp800-63b.html"
-
-          print(f"Fetching: {url}")
-          resp = requests.get(url, timeout=15)
-          resp.raise_for_status()
-
-          soup = BeautifulSoup(resp.text, "lxml")
-
-          target_sections = ["5.1.1", "5.1.1.1", "5.1.1.2"]
-
-          extracted = {}
-          for section_id in target_sections:
-              tag = soup.find(id=section_id) or soup.find("section", {"data-section": section_id})
-              if tag:
-                  extracted[section_id] = tag.get_text(separator=" ", strip=True)
-              else:
-                  for heading in soup.find_all(["h2", "h3", "h4"]):
-                      if section_id in heading.get_text():
-                          content = heading.get_text(separator=" ", strip=True)
-                          next_tag = heading.find_next_sibling()
-                          if next_tag:
-                              content += " " + next_tag.get_text(separator=" ", strip=True)
-                          extracted[section_id] = content
-                          break
-
-          combined = json.dumps(extracted, sort_keys=True)
-          current_hash = hashlib.sha256(combined.encode()).hexdigest()
-
-          print(f"Sections extracted: {list(extracted.keys())}")
-          print(f"Content hash: {current_hash}")
-
-          with open("nist_current_hash.txt", "w") as f:
-              f.write(current_hash)
-
-          with open("nist_content.json", "w") as f:
-              json.dump(extracted, f, indent=2)
-
-          PYEOF
+        run: python scripts/fetch_nist.py
 
       - name: Compare hash against stored baseline
         id: compare
         run: |
           CURRENT_HASH=$(cat nist_current_hash.txt)
-          STORED_HASH=""
-
+          STORED_HASH="none"
           if [ -f ".github/nist_baseline_hash.txt" ]; then
             STORED_HASH=$(cat .github/nist_baseline_hash.txt)
           fi
-
           echo "Stored hash:  $STORED_HASH"
           echo "Current hash: $CURRENT_HASH"
-
           if [ "$CURRENT_HASH" != "$STORED_HASH" ]; then
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "current_hash=$CURRENT_HASH" >> $GITHUB_OUTPUT
             echo "::notice::NIST SP 800-63B change detected. A review PR will be opened."
           else
             echo "changed=false" >> $GITHUB_OUTPUT
-            echo "::notice::No changes detected in NIST SP 800-63B. Rules are current."
+            echo "::notice::No changes detected. Rules are current."
           fi
 
       - name: Generate diff report
         if: steps.compare.outputs.changed == 'true'
-        run: |
-          python3 - <<'PYEOF'
-          import json
-          from datetime import datetime
-
-          with open("nist_content.json") as f:
-              content = json.load(f)
-
-          today = datetime.utcnow().strftime("%Y-%m-%d")
-
-          report = f"""# NIST SP 800-63B Change Detected
-
-**Date detected:** {today}
-**Action required:** Review the changes below and update `rules/nist_rules.json` if the Cerberus ruleset needs to change.
-
----
-
-## What Changed
-
-A difference was detected in the NIST SP 800-63B page content relevant to password policy.
-The sections below were extracted from the live NIST page at the time of detection.
-
-> This is an automated diff. The hash of the relevant sections changed since the last check.
-> Manual review is required before any rules are updated.
-
----
-
-## Extracted Section Content
-
-"""
-
-          for section_id, text in content.items():
-              report += f"### Section {section_id}\n\n"
-              report += f"```\n{text[:2000]}{'...' if len(text) > 2000 else ''}\n```\n\n"
-
-          report += """---
-
-## Review Checklist
-
-- [ ] Read the extracted sections above
-- [ ] Compare against the current `rules/nist_rules.json`
-- [ ] Update any rules that no longer reflect current NIST guidance
-- [ ] Increment the `version` field in `nist_rules.json`
-- [ ] Update the `last_updated` field
-- [ ] Merge this PR to push updates to all users
-
----
-
-*This PR was opened automatically by the Cerberus NIST Rules Update workflow.*
-*The binary's bundled rules are unaffected until a new release is cut.*
-"""
-
-          with open("NIST_CHANGE_REPORT.md", "w") as f:
-              f.write(report)
-
-          print("Diff report written to NIST_CHANGE_REPORT.md")
-          PYEOF
+        run: python scripts/generate_report.py
 
       - name: Update baseline hash
         if: steps.compare.outputs.changed == 'true'
